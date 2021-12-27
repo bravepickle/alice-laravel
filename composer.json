@@ -1,0 +1,33 @@
+{
+    "name": "bravepickle/alice-laravel",
+    "description": "Alice fixtures generator integration to Laravel Framework",
+    "type": "library",
+    "require": {
+        "php": "^7.3|^8.0",
+        "illuminate/database": "^8.0",
+        "nelmio/alice": "^3.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "license": "Apache License 2.0",
+    "authors": [
+        {
+            "name": "bravepickle",
+            "email": "2bravepickle@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "BravePickle\\AliceLaravel\\": "src"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests"
+        }
+    },
+    "scripts": {
+        "test": "phpunit -c phpunit.xml"
+    }
+}
