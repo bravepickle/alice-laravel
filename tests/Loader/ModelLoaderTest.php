@@ -14,7 +14,11 @@ use stdClass;
 class ModelLoaderTest extends TestCase
 {
     /**
-     * @covers ModelLoader::loadFile
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::loadFile
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::__construct
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::getContext
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::mergeParameters
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::withContext
      * @throws LoadingThrowable
      */
     public function testLoadFile(): void
@@ -46,7 +50,11 @@ class ModelLoaderTest extends TestCase
     }
 
     /**
-     * @covers ModelLoader::loadFiles
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::loadFiles
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::__construct
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::getContext
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::mergeParameters
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::withContext
      * @throws LoadingThrowable
      */
     public function testLoadFiles(): void
@@ -78,7 +86,11 @@ class ModelLoaderTest extends TestCase
     }
 
     /**
-     * @covers ModelLoader::loadData
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::loadData
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::__construct
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::getContext
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::mergeParameters
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::withContext
      * @throws LoadingThrowable
      */
     public function testLoadData(): void
@@ -115,6 +127,45 @@ class ModelLoaderTest extends TestCase
 
         $modelLoader = (new ModelLoader($nativeLoader))->withContext($context);
         $this->assertEquals($context, $modelLoader->getContext(), 'Context values mismatch');
+        $actualReturn = $modelLoader->loadData($data, $parameters, $objects);
+        $this->assertEquals($expectedReturn, $actualReturn);
+    }
+
+    /**
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::loadData
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::__construct
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::getContext
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::mergeParameters
+     * @throws LoadingThrowable
+     */
+    public function testLoadDataWithoutContext(): void
+    {
+        $data = [
+            stdClass::class => [
+                'user{1..10}' => [
+                    'username' => '<username()>',
+                ],
+            ]
+        ];
+        $parameters = ['lorem' => 'ipsum', 'foo' => 'bar'];
+        $objects = ['now' => new \DateTime()];
+
+        $expectedParameters = $parameters;
+        $expectedReturn = new ObjectSet(new ParameterBag(), new ObjectBag());
+
+        $nativeLoader = $this->createMock(NativeLoader::class);
+        $nativeLoader->expects($this->once())
+            ->method('loadData')
+            ->with(
+                $this->equalTo($data),
+                $this->equalTo($expectedParameters),
+                $this->equalTo($objects),
+            )
+            ->willReturn($expectedReturn)
+        ;
+
+        $modelLoader = new ModelLoader($nativeLoader);
+        $this->assertEquals([], $modelLoader->getContext(), 'Context values mismatch');
         $actualReturn = $modelLoader->loadData($data, $parameters, $objects);
         $this->assertEquals($expectedReturn, $actualReturn);
     }
