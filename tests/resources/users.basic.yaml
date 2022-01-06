@@ -1,0 +1,11 @@
+Tests\Models\User:
+    admin{1..3}:
+        # TODO: replace with setAttribute if instance of Eloquent Model with option to disable
+#        __construct:
+#            -
+        id: '10<current()>'
+        username: 'admin<current()>'
+        name: '<{prefix}> <name("male")>'
+        email: '<email()>'
+#        created_at: '<dateTimeBetween("-200 days", "now")>'
+#        updated_at: '<dateTimeBetween($created_at, "now")>'
