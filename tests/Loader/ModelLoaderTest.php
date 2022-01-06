@@ -3,6 +3,7 @@
 namespace Tests\Loader;
 
 use BravePickle\AliceLaravel\Loader\ModelLoader;
+use Illuminate\Contracts\Support\Arrayable;
 use Nelmio\Alice\Loader\NativeLoader;
 use Nelmio\Alice\ObjectBag;
 use Nelmio\Alice\ObjectSet;
@@ -41,8 +42,7 @@ class ModelLoaderTest extends TestCase
                 $this->equalTo($expectedParameters),
                 $this->equalTo($objects),
             )
-            ->willReturn($expectedReturn)
-        ;
+            ->willReturn($expectedReturn);
 
         $modelLoader = (new ModelLoader($nativeLoader))->withContext($context);
         $this->assertEquals($context, $modelLoader->getContext(), 'Context values mismatch');
@@ -77,8 +77,7 @@ class ModelLoaderTest extends TestCase
                 $this->equalTo($expectedParameters),
                 $this->equalTo($objects),
             )
-            ->willReturn($expectedReturn)
-        ;
+            ->willReturn($expectedReturn);
 
         $modelLoader = (new ModelLoader($nativeLoader))->withContext($context);
         $this->assertEquals($context, $modelLoader->getContext(), 'Context values mismatch');
@@ -105,7 +104,7 @@ class ModelLoaderTest extends TestCase
                     'email' => '<email()>',
                     'favoriteNumber' => '50%? <numberBetween(1, 200)>',
                 ],
-            ]
+            ],
         ];
         $parameters = ['lorem' => 'ipsum', 'foo' => 'bar'];
         $objects = ['now' => new \DateTime()];
@@ -123,8 +122,7 @@ class ModelLoaderTest extends TestCase
                 $this->equalTo($expectedParameters),
                 $this->equalTo($objects),
             )
-            ->willReturn($expectedReturn)
-        ;
+            ->willReturn($expectedReturn);
 
         $modelLoader = (new ModelLoader($nativeLoader))->withContext($context);
         $this->assertEquals($context, $modelLoader->getContext(), 'Context values mismatch');
@@ -146,7 +144,7 @@ class ModelLoaderTest extends TestCase
                 'user{1..10}' => [
                     'username' => '<username()>',
                 ],
-            ]
+            ],
         ];
         $parameters = ['lorem' => 'ipsum', 'foo' => 'bar'];
         $objects = ['now' => new \DateTime()];
@@ -162,8 +160,7 @@ class ModelLoaderTest extends TestCase
                 $this->equalTo($expectedParameters),
                 $this->equalTo($objects),
             )
-            ->willReturn($expectedReturn)
-        ;
+            ->willReturn($expectedReturn);
 
         $modelLoader = new ModelLoader($nativeLoader);
         $this->assertEquals([], $modelLoader->getContext(), 'Context values mismatch');
@@ -182,44 +179,76 @@ class ModelLoaderTest extends TestCase
     public function testLoadUsers(): void
     {
         $data = [
+            'parameters' => ['foo' => 'bar'],
             User::class => [
-                'user{1..10}' => [
+                'user{1..2}' => [
+                    'id' => '<current()>',
                     'username' => '<username()>',
+                    'name' => '<{prefix}> <name()> <{foo}> <{suffix}>',
+                    'email' => '<email()>',
                 ],
-            ]
+            ],
         ];
-        $parameters = ['prefix' => 'Don.', ];
-//        $objects = [];
-
-//        $expectedParameters = $parameters;
-//        $expectedReturn = new ObjectSet(new ParameterBag(), new ObjectBag());
-//
-//        $nativeLoader = $this->createMock(NativeLoader::class);
-//        $nativeLoader->expects($this->once())
-//            ->method('loadData')
-//            ->with(
-//                $this->equalTo($data),
-//                $this->equalTo($expectedParameters),
-//                $this->equalTo($objects),
-//            )
-//            ->willReturn($expectedReturn)
-//        ;
-
-//        $modelLoader = new ModelLoader($nativeLoader);
+        $parameters = ['prefix' => 'Don.',];
         $modelLoader = new ModelLoader();
-//        $this->assertEquals([], $modelLoader->getContext(), 'Context values mismatch');
-//        $actualReturn = $modelLoader->loadData($data, $parameters, $objects);
         $sep = DIRECTORY_SEPARATOR;
-        $actualReturn = $modelLoader->loadFile(
-            __DIR__ . $sep . '..' . $sep . 'resources' . $sep . 'users.basic.yaml',
+        $subReturn = $modelLoader->loadFile(
+            __DIR__.$sep.'..'.$sep.'resources'.$sep.'users.basic.yaml',
             $parameters
         );
 
-//        xdebug_var_dump(json_encode($actualReturn, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-        xdebug_var_dump(json_encode($actualReturn->getObjects(), JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
-        xdebug_var_dump($actualReturn->getParameters());
-//        xdebug_var_dump($actualReturn->getObjects());
-        die("\n" . __METHOD__ . ':' . __FILE__ . ':' . __LINE__);
-//        $this->assertEquals($expectedReturn, $actualReturn);
+        $actualReturn = $modelLoader->loadData(
+            $data,
+            array_merge($parameters, $subReturn->getParameters()),
+            $subReturn->getObjects()
+        );
+
+        $expected = [
+            'admin1' => [
+                'id' => 101,
+                'username' => 'admin1',
+                'name' => 'Don. Mr. Monty Watsica Foo',
+                'email' => 'zprosacco@hotmail.com',
+            ],
+            'admin2' => [
+                'id' => 102,
+                'username' => 'admin2',
+                'name' => 'Don. Terence Moen I Foo',
+                'email' => 'gordon93@yahoo.com',
+            ],
+            'admin3' => [
+                'id' => 103,
+                'username' => 'admin3',
+                'name' => 'Don. Harmon Hahn II Foo',
+                'email' => 'lynch.nikki@hotmail.com',
+            ],
+            'user1' => [
+                'id' => 1,
+                'username' => 'terry.johns',
+                'name' => 'Don. Ivy Mann bar Foo',
+                'email' => 'fschmeler@gmail.com',
+            ],
+            'user2' => [
+                'id' => 2,
+                'username' => 'celia68',
+                'name' => 'Don. Maximillian Larson bar Foo',
+                'email' => 'vtremblay@hotmail.com',
+            ],
+        ];
+
+        $actual = [];
+        foreach ($actualReturn->getObjects() as $key => $object) {
+            $actual[$key] = $object instanceof Arrayable ? $object->toArray() : $object;
+        }
+
+        $this->assertEquals($expected, $actual, 'Parsed objects not matched');
+        $this->assertEquals(
+            [
+                'prefix' => 'Don.',
+                'suffix' => 'Foo',
+                'foo' => 'bar',
+            ],
+            $actualReturn->getParameters()
+        );
     }
 }

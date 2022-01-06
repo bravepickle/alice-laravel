@@ -10,8 +10,6 @@ use Illuminate\Database\Eloquent\Model;
  * @property string $username
  * @property string $email
  * @property string|null $name
- * @property Carbon|string|null $created_at
- * @property Carbon|string|null $updated_at
  */
 class User extends Model
 {
