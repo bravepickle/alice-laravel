@@ -2,7 +2,6 @@
 
 namespace Tests\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
 /**
