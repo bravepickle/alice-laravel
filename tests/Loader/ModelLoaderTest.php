@@ -168,9 +168,9 @@ class ModelLoaderTest extends TestCase
         $this->assertEquals($expectedReturn, $actualReturn);
     }
 
-
     /**
      * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::loadData
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::loadFile
      * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::__construct
      * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::getContext
      * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::mergeParameters
@@ -191,9 +191,8 @@ class ModelLoaderTest extends TestCase
         ];
         $parameters = ['prefix' => 'Don.',];
         $modelLoader = new ModelLoader();
-        $sep = DIRECTORY_SEPARATOR;
         $subReturn = $modelLoader->loadFile(
-            __DIR__.$sep.'..'.$sep.'resources'.$sep.'users.basic.yaml',
+            $this->getResourcesPath().'users.basic.yaml',
             $parameters
         );
 
@@ -250,5 +249,49 @@ class ModelLoaderTest extends TestCase
             ],
             $actualReturn->getParameters()
         );
+    }
+
+    /**
+     * @return string
+     */
+    protected function getResourcesPath(): string
+    {
+        return __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'resources'.DIRECTORY_SEPARATOR;
+    }
+
+    /**
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::loadFile
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::mergeParameters
+     * @throws LoadingThrowable
+     */
+    public function testLoadCategories(): void
+    {
+        $modelLoader = new ModelLoader();
+        $actualReturn = $modelLoader->loadFile($this->getResourcesPath().'categories.yaml');
+
+        $expected = [
+            'cat1' => [
+                'id' => 1,
+                'name' => 'Root',
+                'parent_id' => null,
+            ],
+            'cat2' => [
+                'id' => 2,
+                'name' => 'Leaf',
+                'parent_id' => 3,
+            ],
+            'cat3' => [
+                'id' => 3,
+                'name' => 'Sub',
+                'parent_id' => 1,
+            ],
+        ];
+
+        $actual = [];
+        foreach ($actualReturn->getObjects() as $key => $object) {
+            $actual[$key] = $object instanceof Arrayable ? $object->toArray() : $object;
+        }
+
+        $this->assertEquals($expected, $actual, 'Parsed objects not matched');
     }
 }

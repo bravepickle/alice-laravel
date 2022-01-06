@@ -1,0 +1,15 @@
+Tests\Models\Category:
+    cat1:
+        id: 1
+        name: Root
+        parent: null
+
+    cat2:
+        id: 2
+        name: Leaf
+        parent: '@cat3'
+
+    cat3:
+        id: 3
+        name: Sub
+        parent: '@cat1'
