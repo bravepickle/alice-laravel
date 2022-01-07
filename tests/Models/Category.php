@@ -18,15 +18,4 @@ class Category extends Model
 
     public $timestamps = false;
 
-    /**
-     * @param  Category|null  $parent
-     * @return Category
-     */
-    public function setParent(?Category $parent): self
-    {
-        $this->parent_id = $parent->id ?? null;
-
-        return $this;
-    }
-
 }

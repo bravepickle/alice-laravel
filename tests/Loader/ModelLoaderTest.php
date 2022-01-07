@@ -3,7 +3,11 @@
 namespace Tests\Loader;
 
 use BravePickle\AliceLaravel\Loader\ModelLoader;
+use BravePickle\AliceLaravel\Models\GenericModel;
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Database\ConnectionResolver;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\SQLiteConnection;
 use Nelmio\Alice\Loader\NativeLoader;
 use Nelmio\Alice\ObjectBag;
 use Nelmio\Alice\ObjectSet;
@@ -290,6 +294,90 @@ class ModelLoaderTest extends TestCase
 
         $actual = [];
         foreach ($actualReturn->getObjects() as $key => $object) {
+            $actual[$key] = $object instanceof Arrayable ? $object->toArray() : $object;
+        }
+
+        $this->assertEquals($expected, $actual, 'Parsed objects not matched');
+    }
+
+    /**
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::__construct
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::loadFile
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::mergeParameters
+     * @throws LoadingThrowable
+     * @throws \Throwable
+     */
+    public function testLoadGenericModels(): void
+    {
+        $pdo = new \PDO('sqlite::memory:');
+        $pdo->exec('DROP TABLE IF EXISTS addresses');
+        $pdo->exec(
+            'CREATE TABLE addresses (id INTEGER PRIMARY KEY AUTOINCREMENT, '.
+            'city STRING, street STRING, post STRING, created_at STRING, updated_at STRING)'
+        );
+
+        $connection = new SQLiteConnection($pdo);
+        $resolver = new ConnectionResolver(['default' => $connection]);
+        $resolver->setDefaultConnection('default');
+
+        GenericModel::setConnectionResolver($resolver);
+
+        $data = [
+            GenericModel::class => [
+                'address_proto (template)' => [
+                    '__construct' => [
+                        [],
+                        'context' => [
+                            'table' => 'addresses',
+                        ],
+                    ],
+                    'id' => '<current()>',
+                    'city' => '<city()>',
+                    'street' => '<streetName()>',
+                    'post' => '<postcode()>',
+                ],
+                'address{1..2} (extends address_proto)' => [],
+                'customAddress (extends address_proto)' => [
+                    'id' => 100,
+                    'street' => null,
+                ],
+            ],
+        ];
+        $modelLoader = new ModelLoader();
+        $actualReturn = $modelLoader->loadData($data);
+
+        $expected = [
+            'address1' => [
+                'id' => 1,
+                'city' => 'Montyside',
+                'street' => 'Stroman River',
+                'post' => '85556-2307',
+            ],
+            'address2' => [
+                'id' => 2,
+                'city' => 'Vandervortstad',
+                'street' => 'Maeve Hill',
+                'post' => '93553',
+            ],
+            'customAddress' => [
+                'id' => 100,
+                'city' => 'Lake Emory',
+                'street' => null,
+                'post' => '52454',
+            ],
+        ];
+
+        $actual = [];
+        foreach ($actualReturn->getObjects() as $key => $object) {
+            if ($object instanceof Model) {
+                $object->setHidden(['updated_at', 'created_at']);
+
+                $object->saveOrFail();
+
+                $this->assertNotEmpty($object->created_at, 'Creation date after save must be saved');
+                $this->assertNotEmpty($object->updated_at, 'Update date after save must be saved');
+            }
+
             $actual[$key] = $object instanceof Arrayable ? $object->toArray() : $object;
         }
 

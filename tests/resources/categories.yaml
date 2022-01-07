@@ -2,14 +2,14 @@ Tests\Models\Category:
     cat1:
         id: 1
         name: Root
-        parent: null
+        parent_id: null
 
     cat2:
         id: 2
         name: Leaf
-        parent: '@cat3'
+        parent_id: '@cat3->id'
 
     cat3:
         id: 3
         name: Sub
-        parent: '@cat1'
+        parent_id: '@cat1->id'
