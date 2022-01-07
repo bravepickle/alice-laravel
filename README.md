@@ -1,5 +1,10 @@
 # alice-laravel
-Alice fixtures generator integration to Laravel Framework
+Alice's fixtures generator integration to Laravel Framework
+
+## Features
+1. Implemented ModelLoader class for loading data from Alice configs to Eloquent models
+2. Added GenericModel abstraction for supporting tables that have no Laravel models present. Useful when databases 
+are shared, have temporary tables or some tables should be accessed indirectly
 
 ## TODO
 - [ ] write unit tests

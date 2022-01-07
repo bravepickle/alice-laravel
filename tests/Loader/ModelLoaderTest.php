@@ -260,6 +260,7 @@ class ModelLoaderTest extends TestCase
     }
 
     /**
+     * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::__construct
      * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::loadFile
      * @covers \BravePickle\AliceLaravel\Loader\ModelLoader::mergeParameters
      * @throws LoadingThrowable
